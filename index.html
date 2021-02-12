@@ -35,13 +35,14 @@
             create: create,
             update: update
         },
-        // pixelArt: true,
+         pixelArt: true,
         zoom: 1,
     };
 
     var game = new Phaser.Game(config);
     var player;
     var controls;
+    var mouse;
 
     function preload ()
     {
@@ -52,12 +53,15 @@
 
     function create ()
     {   
+        mouse=this.input.mousePointer;
         cursors = this.input.keyboard.createCursorKeys();
+        
         const map = this.make.tilemap({key: 'map'});
         const tileset = map.addTilesetImage('roomtiles', 'tiles')
         const ground = map.createStaticLayer('ground', tileset, 350, 250)
-        player = this.physics.add.sprite(350,300,'habbo');
+        player = this.physics.add.sprite(350,300,'habbo').setOrigin(0.5, 1);
         player.setScale(0.5);
+        
 
         this.anims.create({
             key: 'left',
@@ -77,7 +81,7 @@
             frames: [{key: 'habbo', frame: 0}],
             frameRate: 20
         })
-
+       
     }
 
     function update ()
@@ -103,6 +107,14 @@
           player.setVelocityY(0);
           player.anims.play('turn', true)
         }
+        
+        if(mouse.isDown == true){
+            console.log(`Clicked X:${mouse.x}  Y: ${mouse.y}`)
+            player.x = mouse.x
+            player.y = mouse.y
+            
+        }
+
 
     }
 
