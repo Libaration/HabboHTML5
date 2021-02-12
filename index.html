@@ -36,7 +36,7 @@
             update: update
         },
          pixelArt: true,
-        zoom: 1,
+        zoom: 1.2,
     };
 
     var game = new Phaser.Game(config);
@@ -46,7 +46,7 @@
 
     function preload ()
     {
-        this.load.image('tiles', 'assets/tile.png')
+        this.load.image('side', 'assets/tile_b.png')
         this.load.tilemapTiledJSON('map', 'assets/65x32.json')
         this.load.spritesheet('habbo', 'assets/habbospritesheet.png', { frameWidth: 128, frameHeight: 220 });
     }
@@ -57,8 +57,8 @@
         cursors = this.input.keyboard.createCursorKeys();
         
         const map = this.make.tilemap({key: 'map'});
-        const tileset = map.addTilesetImage('roomtiles', 'tiles')
-        const ground = map.createStaticLayer('ground', tileset, 350, 195)
+        const sidetiles = map.addTilesetImage('sidetile', 'side')
+        const ground = map.createStaticLayer('ground', sidetiles, 350, 195)
         player = this.physics.add.sprite(350,300,'habbo').setOrigin(0.5, 1);
         player.setScale(0.5);
         

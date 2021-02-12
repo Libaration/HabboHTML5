@@ -1,9 +1,17 @@
 { "compressionlevel":-1,
+ "editorsettings":
+    {
+     "export":
+        {
+         "format":"json",
+         "target":"65x32.json"
+        }
+    },
  "height":8,
  "infinite":false,
  "layers":[
         {
-         "data":[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+         "data":[2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
          "height":8,
          "id":1,
          "name":"ground",
@@ -32,6 +40,19 @@
          "spacing":0,
          "tilecount":1,
          "tileheight":32,
+         "tilewidth":65
+        }, 
+        {
+         "columns":1,
+         "firstgid":2,
+         "image":"..\/..\/..\/habbo5\/Client\/build\/assets\/images\/room\/tile\/tile_b.png",
+         "imageheight":47,
+         "imagewidth":65,
+         "margin":0,
+         "name":"sidetile",
+         "spacing":0,
+         "tilecount":1,
+         "tileheight":47,
          "tilewidth":65
         }],
  "tilewidth":65,
