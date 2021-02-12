@@ -1,0 +1,112 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8" />
+    <title>maptest3</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.51.0/dist/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: #111
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+    var config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: {y : 0},
+                debug: false
+            }
+        },
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        },
+        // pixelArt: true,
+        zoom: 1,
+    };
+
+    var game = new Phaser.Game(config);
+    var player;
+    var controls;
+
+    function preload ()
+    {
+        this.load.image('tiles', 'assets/tile.png')
+        this.load.tilemapTiledJSON('map', 'assets/room.json')
+        this.load.spritesheet('habbo', 'assets/habbospritesheet.png', { frameWidth: 128, frameHeight: 220 });
+    }
+
+    function create ()
+    {   
+        cursors = this.input.keyboard.createCursorKeys();
+        const map = this.make.tilemap({key: 'map'});
+        const tileset = map.addTilesetImage('roomtiles', 'tiles')
+        const ground = map.createStaticLayer('ground', tileset, 350, 250)
+        player = this.physics.add.sprite(350,300,'habbo');
+        player.setScale(0.5);
+
+        this.anims.create({
+            key: 'left',
+            frames: this.anims.generateFrameNumbers('habbo', {start: 1, end: 3}),
+            frameRate: 10,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'right',
+            frames: this.anims.generateFrameNumbers('habbo', { start: 4, end: 6 }),
+            frameRate: 10,
+            repeat: -1
+        })
+        this.anims.create({
+            key: 'turn',
+            frames: [{key: 'habbo', frame: 0}],
+            frameRate: 20
+        })
+
+    }
+
+    function update ()
+    {
+        if(player.body.velocity.x || player.body.velocity.y !== 0){
+            console.log(`Current Position X:${Math.floor(player.x)} Y:${Math.floor(player.y)}`)
+        }
+      
+        if(cursors.right.isDown){
+          player.setVelocityX(100);
+          player.anims.play('right', true);
+        }  
+        else if(cursors.left.isDown){
+          player.setVelocityX(-100);
+          player.anims.play('left', true);
+        }
+        else if(cursors.down.isDown){
+          player.setVelocityY(100);
+          player.anims.play('turn', true);
+        }
+        else {
+          player.setVelocityX(0);
+          player.setVelocityY(0);
+          player.anims.play('turn', true)
+        }
+
+    }
+
+</script>
+
+</body>
+</html>
