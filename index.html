@@ -36,7 +36,7 @@
             update: update
         },
          pixelArt: true,
-        zoom: 1.3,
+        zoom: 1.2,
     };
 
     var game = new Phaser.Game(config);
@@ -44,25 +44,36 @@
     var controls;
     var mouse;
     var outline; 
+    var ground;
+    var map;
+    
     function preload ()
     {
+        // this.load.image('tile', 'assets/tile.png')
+        // this.load.tilemapTiledJSON('map', 'assets/room.json')
+
+
         this.load.image('side', 'assets/tile_b.png')
-        this.load.image('tileoutline', 'assets/tile_outline.png')
         this.load.tilemapTiledJSON('map', 'assets/65x32.json')
+        this.load.image('tileoutline', 'assets/tile_outline.png')
         this.load.spritesheet('habbo', 'assets/habbospritesheet.png', { frameWidth: 128, frameHeight: 220 });
     }
 
     function create ()
     {   
-
+        
         this.input.on('pointerup',handleClick);
         mouse=this.input.mousePointer;
         cursors = this.input.keyboard.createCursorKeys();
-        outline = this.add.image(350,195, 'tileoutline');
+        outline = this.add.sprite(350,195, 'tileoutline');
         outline.visible = false;
-        const map = this.make.tilemap({key: 'map'});
+        // map = this.make.tilemap({key: 'map'});
+        // const sidetiles = map.addTilesetImage('roomtiles', 'tile')
+        // ground = map.createStaticLayer('ground', sidetiles, 412, 223)
+        map = this.make.tilemap({key: 'map'});
         const sidetiles = map.addTilesetImage('sidetile', 'side')
-        const ground = map.createStaticLayer('ground', sidetiles, 350, 195)
+        ground = map.createStaticLayer('ground', sidetiles, 350, 195)
+        
         player = this.physics.add.sprite(350,300,'habbo').setOrigin(0.5, 1);
         player.setScale(0.5);
         player.depth = 2;
@@ -87,11 +98,14 @@
             frames: [{key: 'habbo', frame: 0}],
             frameRate: 20
         })
+        
        
+        
     }
 
     function update ()
     {
+        
         
         if(player.body.velocity.x || player.body.velocity.y !== 0){
             console.log(`Current Position X:${Math.floor(player.x)} Y:${Math.floor(player.y)}`)
@@ -114,16 +128,20 @@
           player.setVelocityY(0);
           player.anims.play('turn', true)
         }
+        outline.inputEnabled = true;
         outline.visible = true;
-        outline.x = mouse.x;
-        outline.y = mouse.y;
+        outline.y = Phaser.Math.Snap.To(mouse.y, 32)  
+         outline.x = Phaser.Math.Snap.To(mouse.x, 69)
+        // outline.x = mouse.x
+        
+        
     }
 
 
     handleClick = function(pointer) {
         console.log(`Clicked X:${mouse.x}  Y: ${mouse.y}`)
-        player.x = mouse.x
-        player.y = mouse.y
+        player.y = Phaser.Math.Snap.To(mouse.y, 32)  
+        player.x = Phaser.Math.Snap.To(mouse.x, 69)    
     }
 
 </script>
