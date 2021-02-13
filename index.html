@@ -63,6 +63,7 @@
         const ground = map.createStaticLayer('ground', sidetiles, 350, 195)
         player = this.physics.add.sprite(350,300,'habbo').setOrigin(0.5, 1);
         player.setScale(0.5);
+        player.depth = 2;
         
 
         this.anims.create({
@@ -120,7 +121,7 @@
         outline.visible = true;
         outline.x = mouse.x;
         outline.y = mouse.y;
-        outline.depth = 20;
+        outline.depth = 1;
         
 
     }
