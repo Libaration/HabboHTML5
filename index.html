@@ -54,6 +54,8 @@
 
     function create ()
     {   
+
+        this.input.on('pointerup',handleClick);
         mouse=this.input.mousePointer;
         cursors = this.input.keyboard.createCursorKeys();
         outline = this.add.image(350,195, 'tileoutline');
@@ -64,6 +66,7 @@
         player = this.physics.add.sprite(350,300,'habbo').setOrigin(0.5, 1);
         player.setScale(0.5);
         player.depth = 2;
+        outline.depth = 1;
         
 
         this.anims.create({
@@ -89,6 +92,7 @@
 
     function update ()
     {
+        
         if(player.body.velocity.x || player.body.velocity.y !== 0){
             console.log(`Current Position X:${Math.floor(player.x)} Y:${Math.floor(player.y)}`)
         }
@@ -110,20 +114,16 @@
           player.setVelocityY(0);
           player.anims.play('turn', true)
         }
-        
-        if(mouse.isDown == true){
-            console.log(`Clicked X:${mouse.x}  Y: ${mouse.y}`)
-            player.x = mouse.x
-            player.y = mouse.y
-            
-        }
-
         outline.visible = true;
         outline.x = mouse.x;
         outline.y = mouse.y;
-        outline.depth = 1;
-        
+    }
 
+
+    handleClick = function(pointer) {
+        console.log(`Clicked X:${mouse.x}  Y: ${mouse.y}`)
+        player.x = mouse.x
+        player.y = mouse.y
     }
 
 </script>
