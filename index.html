@@ -50,6 +50,7 @@
     var scene;
     const offsetX = 32*13
     const offsetY = 16*13
+    let tween = null;
     function preload ()
     {
         this.load.image('tile', 'assets/tile.png')
@@ -106,7 +107,11 @@
         let newX = map.tileToWorldXY(x,y).x + 32 //why do i have to add here?
         let newY = map.tileToWorldXY(x,y).y - 32 // why am I subtracting? the math is wrong somewhere else
         // player.anims.play({key: 'right'})
-        scene.tweens.add({
+        if (tween){
+            console.log('Already walking, stopping walk')
+            tween.stop()
+        }
+        tween = scene.tweens.add({
         onStart: () => {
             console.log(`Starting walking to X:${newX}-Y:${newY}`)
             if(newX < player.x){
