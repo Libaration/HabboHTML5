@@ -2,9 +2,9 @@
 <html lang="en"> 
 <head> 
     <meta charset="UTF-8" />
-    <title>maptest3</title>
-    <script src="//cdn.jsdelivr.net/npm/phaser@3.51.0/dist/phaser.js"></script>
-    <style type="text/css">
+    <title>new map design test</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.52.0/dist/phaser.js"></script>
+   <style type="text/css">
         body {
             margin: 0;
             display: flex;
@@ -19,7 +19,7 @@
 
 <script type="text/javascript">
 
-    var config = {
+   var config = {
         type: Phaser.AUTO,
         width: 800,
         height: 600,
@@ -36,112 +36,66 @@
             update: update
         },
          pixelArt: true,
-        zoom: 1.2,
+        //  zoom: 1.5
     };
 
     var game = new Phaser.Game(config);
-    var player;
-    var controls;
-    var mouse;
-    var outline; 
-    var ground;
-    var map;
-    
+
+    let tile;
+    let grid;
+    let mapContainer;
+    let tilehover;
+    let mouse;
+    let map;
+    const offsetX = 32*13
+    const offsetY = 16*13
     function preload ()
     {
-        // this.load.image('tile', 'assets/tile.png')
-        // this.load.tilemapTiledJSON('map', 'assets/room.json')
-
-
-        this.load.image('side', 'assets/tile_b.png')
-        this.load.tilemapTiledJSON('map', 'assets/65x32.json')
-        this.load.image('tileoutline', 'assets/tile_outline.png')
+        this.load.image('tile', 'assets/tile.png')
+        this.load.image('tilehover', 'assets/tile_outline.png')
+        this.load.tilemapTiledJSON("map", "assets/7x7.json")
         this.load.spritesheet('habbo', 'assets/habbospritesheet.png', { frameWidth: 128, frameHeight: 220 });
     }
 
     function create ()
     {   
+        map = this.make.tilemap({key: 'map', tileWidth: 64, tileHeight: 32})
+        const tileset = map.addTilesetImage('roomtile', 'tile',64,32,0,0)
+        const worldLayer = map.createStaticLayer("ground", tileset, game.config.width/2 ,game.config.height/2);
         
+        worldLayer.setOrigin(0,0)
+        mouse = this.input.mousePointer;
         this.input.on('pointerup',handleClick);
-        mouse=this.input.mousePointer;
-        cursors = this.input.keyboard.createCursorKeys();
-        outline = this.add.sprite(350,195, 'tileoutline');
-        outline.visible = false;
-        // map = this.make.tilemap({key: 'map'});
-        // const sidetiles = map.addTilesetImage('roomtiles', 'tile')
-        // ground = map.createStaticLayer('ground', sidetiles, 412, 223)
-        map = this.make.tilemap({key: 'map'});
-        const sidetiles = map.addTilesetImage('sidetile', 'side')
-        ground = map.createStaticLayer('ground', sidetiles, 350, 195)
-        
-        player = this.physics.add.sprite(350,300,'habbo').setOrigin(0.5, 1);
-        player.setScale(0.5);
-        player.depth = 2;
-        outline.depth = 1;
-        
-
-        this.anims.create({
-            key: 'left',
-            frames: this.anims.generateFrameNumbers('habbo', {start: 1, end: 3}),
-            frameRate: 10,
-            repeat: -1
-        });
-
-        this.anims.create({
-            key: 'right',
-            frames: this.anims.generateFrameNumbers('habbo', { start: 4, end: 6 }),
-            frameRate: 10,
-            repeat: -1
-        })
-        this.anims.create({
-            key: 'turn',
-            frames: [{key: 'habbo', frame: 0}],
-            frameRate: 20
-        })
-        
-       
-        
+        tilehover = this.add.sprite(32 * 12, 16 * 12, 'tilehover')
+        tilehover.depth = 2
+        player = this.physics.add.sprite(32*12, 16*12, 'habbo')
+        player.setScale(0.5)
+        this.tweens.add({
+        targets: player,
+        x: 430,
+        y: 447,
+        duration: 3000,
+        ease: 'Power2',
+    });
     }
 
     function update ()
     {
-        
-        
-        if(player.body.velocity.x || player.body.velocity.y !== 0){
-            console.log(`Current Position X:${Math.floor(player.x)} Y:${Math.floor(player.y)}`)
-        }
-      
-        if(cursors.right.isDown){
-          player.setVelocityX(100);
-          player.anims.play('right', true);
-        }  
-        else if(cursors.left.isDown){
-          player.setVelocityX(-100);
-          player.anims.play('left', true);
-        }
-        else if(cursors.down.isDown){
-          player.setVelocityY(100);
-          player.anims.play('turn', true);
-        }
-        else {
-          player.setVelocityX(0);
-          player.setVelocityY(0);
-          player.anims.play('turn', true)
-        }
-        outline.inputEnabled = true;
-        outline.visible = true;
-        outline.y = Phaser.Math.Snap.To(mouse.y, 32)  
-         outline.x = Phaser.Math.Snap.To(mouse.x, 69)
-        // outline.x = mouse.x
-        
-        
+         
     }
 
+    handleClick = (pointer) => {
+        console.log(pointer.x + "   " + pointer.y)
+        let tileAtPointer = map.getTileAtWorldXY(pointer.x, pointer.y)
+        cartToIso()
+        console.log(tileAtPointer)
+       
+    }
 
-    handleClick = function(pointer) {
-        console.log(`Clicked X:${mouse.x}  Y: ${mouse.y}`)
-        player.y = Phaser.Math.Snap.To(mouse.y, 32)  
-        player.x = Phaser.Math.Snap.To(mouse.x, 69)    
+    cartToIso = () => {
+        let x =  Math.floor((mouse.y / 32 + mouse.x / 64) - 16)
+        let y = Math.floor( 0.5 * (-mouse.x / 32 + mouse.y / 16) -3)
+        return {x: x, y: y}
     }
 
 </script>
