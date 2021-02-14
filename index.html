@@ -53,6 +53,7 @@
     let tween = null;
     function preload ()
     {
+        //loads the sprites and assets to be used
         this.load.image('tile', 'assets/tile.png')
         this.load.image('tilehover', 'assets/tile_outline.png')
         this.load.tilemapTiledJSON("map", "assets/7x7.json")
@@ -63,16 +64,25 @@
     {   
         
         scene=this; // this is wrong. shouldn't be global. fix later
+        // Set mouse variable and send to handleclick function on mouse up event
+        mouse = this.input.mousePointer;
+        this.input.on('pointerup',handleClick);
+
+        //Create tilemap
         map = this.make.tilemap({key: 'map', tileWidth: 64, tileHeight: 32})
         const tileset = map.addTilesetImage('roomtile', 'tile',64,32,0,0)
         const worldLayer = map.createStaticLayer("ground", tileset, game.config.width/2 ,game.config.height/2);
         worldLayer.setOrigin(0,0)
-        mouse = this.input.mousePointer;
-        this.input.on('pointerup',handleClick);
+
+        //add outline square for hovering over tiles
         tilehover = this.add.sprite(32 * 12, 16 * 12, 'tilehover')
         tilehover.depth = 2
+
+        //creates habbo sprite and sets scale to match tilemap
         player = this.physics.add.sprite(32*12, 16*12, 'habbo')
         player.setScale(0.5)
+
+        //Set Animations for habbo walking
         this.anims.create({
             key: 'left',
             frames: this.anims.generateFrameNumbers('habbo', {start: 1, end: 3}),
@@ -99,16 +109,20 @@
     }
 
     handleClick = (pointer) => {
+        //prevents variable distance between tiles (currently only works for x axis)
         let distance = player.x - pointer.x;
-        let speed = 100;
+        let speed = 120;
         let duration = (Math.sqrt(distance*distance) / speed) * 1000;
-        console.log(pointer.x + "   " + pointer.y)
+
+        //Finds which Tile (x,y) user clicked and returns world position for it
         let {x, y} = cartToIso()
         let newX = map.tileToWorldXY(x,y).x + 32 //why do i have to add here?
         let newY = map.tileToWorldXY(x,y).y - 32 // why am I subtracting? the math is wrong somewhere else
-        // player.anims.play({key: 'right'})
+
+        //If user clicks begins walk animation depending on click direction again only on X axis as of now
         if (tween){
-            console.log('Already walking, stopping walk')
+            console.log('Already walking')
+            console.log('Stopping walking')
             tween.stop()
         }
         tween = scene.tweens.add({
@@ -132,10 +146,13 @@
        
     }
     onCompleteHandler = () =>{
+        //stops walking animation this should stop on last player direction in the future
         console.log(`Finished walking, arrived at X:${player.x}-Y:${player.y}`)
         player.anims.play({key: 'turn'})
+        tween = null;
     }
     cartToIso = () => {
+        //maths for finding the isometric square/tile cords for where the user clicks
         let x =  Math.floor((mouse.y / 32 + mouse.x / 64) - 16)
         let y = Math.floor( 0.5 * (-mouse.x / 32 + mouse.y / 16) -3)
         return {x: x, y: y}
