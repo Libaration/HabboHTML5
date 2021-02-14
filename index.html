@@ -47,6 +47,7 @@
     let tilehover;
     let mouse;
     let map;
+    var scene;
     const offsetX = 32*13
     const offsetY = 16*13
     function preload ()
@@ -59,10 +60,11 @@
 
     function create ()
     {   
+        
+        scene=this; // this is wrong. shouldn't be global. fix later
         map = this.make.tilemap({key: 'map', tileWidth: 64, tileHeight: 32})
         const tileset = map.addTilesetImage('roomtile', 'tile',64,32,0,0)
         const worldLayer = map.createStaticLayer("ground", tileset, game.config.width/2 ,game.config.height/2);
-        
         worldLayer.setOrigin(0,0)
         mouse = this.input.mousePointer;
         this.input.on('pointerup',handleClick);
@@ -70,13 +72,24 @@
         tilehover.depth = 2
         player = this.physics.add.sprite(32*12, 16*12, 'habbo')
         player.setScale(0.5)
-        this.tweens.add({
-        targets: player,
-        x: 430,
-        y: 447,
-        duration: 3000,
-        ease: 'Power2',
-    });
+        this.anims.create({
+            key: 'left',
+            frames: this.anims.generateFrameNumbers('habbo', {start: 1, end: 3}),
+            frameRate: 10,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'right',
+            frames: this.anims.generateFrameNumbers('habbo', { start: 4, end: 6 }),
+            frameRate: 10,
+            repeat: -1
+        })
+        this.anims.create({
+            key: 'turn',
+            frames: [{key: 'habbo', frame: 0}],
+            frameRate: 20
+        })
     }
 
     function update ()
@@ -85,13 +98,38 @@
     }
 
     handleClick = (pointer) => {
+        let distance = player.x - pointer.x;
+        let speed = 125;
+        let duration = (Math.sqrt(distance*distance) / speed) * 1000;
         console.log(pointer.x + "   " + pointer.y)
-        let tileAtPointer = map.getTileAtWorldXY(pointer.x, pointer.y)
-        cartToIso()
-        console.log(tileAtPointer)
+        let {x, y} = cartToIso()
+        let newX = map.tileToWorldXY(x,y).x + 32 //why do i have to add here?
+        let newY = map.tileToWorldXY(x,y).y - 32 // why am I subtracting? the math is wrong somewhere else
+        // player.anims.play({key: 'right'})
+        scene.tweens.add({
+        onStart: () => {
+            console.log(`Starting walking to X:${newX}-Y:${newY}`)
+            if(newX < player.x){
+                //player.flipX = true; could use for other sprite directions i dont have
+                player.anims.play('left', true)
+            }
+            else if(newX > player.x){
+                player.anims.play('right', true)
+            }
+        },
+        targets: player,
+        x: newX,
+        y: newY,
+        duration: duration,
+        onComplete: onCompleteHandler
+        });
+        
        
     }
-
+    onCompleteHandler = () =>{
+        console.log(`Finished walking, arrived at X:${player.x}-Y:${player.y}`)
+        player.anims.play({key: 'turn'})
+    }
     cartToIso = () => {
         let x =  Math.floor((mouse.y / 32 + mouse.x / 64) - 16)
         let y = Math.floor( 0.5 * (-mouse.x / 32 + mouse.y / 16) -3)
