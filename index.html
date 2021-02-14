@@ -99,7 +99,7 @@
 
     handleClick = (pointer) => {
         let distance = player.x - pointer.x;
-        let speed = 125;
+        let speed = 100;
         let duration = (Math.sqrt(distance*distance) / speed) * 1000;
         console.log(pointer.x + "   " + pointer.y)
         let {x, y} = cartToIso()
