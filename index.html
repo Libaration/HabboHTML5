@@ -3,6 +3,7 @@
 <head> 
     <meta charset="UTF-8" />
     <title>new map design test</title>
+    <script src="assets/easystar.js"></script>
     <script src="//cdn.jsdelivr.net/npm/phaser@3.52.0/dist/phaser.js"></script>
    <style type="text/css">
         body {
@@ -38,49 +39,65 @@
          pixelArt: true,
         //  zoom: 1.5
     };
-
     var game = new Phaser.Game(config);
-
-    let tile;
-    let grid;
-    let mapContainer;
-    let tilehover;
-    let mouse;
-    let map;
+    var player;
+    var tween=null;
     var scene;
-    const offsetX = 32*13
-    const offsetY = 16*13
-    let tween = null;
     function preload ()
     {
         //loads the sprites and assets to be used
         this.load.image('tile', 'assets/tile.png')
         this.load.image('tilehover', 'assets/tile_outline.png')
         this.load.tilemapTiledJSON("map", "assets/7x7.json")
-        this.load.spritesheet('habbo', 'assets/habbospritesheet.png', { frameWidth: 128, frameHeight: 220 });
+        this.load.spritesheet('habbo', 'assets/habbospritesheet.png', { frameWidth: 110, frameHeight: 221 });
     }
-
     function create ()
     {   
-        
-        scene=this; // this is wrong. shouldn't be global. fix later
+        scene = this;
+        //debugging tools
+        this.label = this.add.text(0, 0, '(x, y)', { fontFamily: '"Monospace"'});
+        this.pointer = this.input.activePointer;
+
         // Set mouse variable and send to handleclick function on mouse up event
-        mouse = this.input.mousePointer;
         this.input.on('pointerup',handleClick);
 
         //Create tilemap
-        map = this.make.tilemap({key: 'map', tileWidth: 64, tileHeight: 32})
-        const tileset = map.addTilesetImage('roomtile', 'tile',64,32,0,0)
-        const worldLayer = map.createStaticLayer("ground", tileset, game.config.width/2 ,game.config.height/2);
-        worldLayer.setOrigin(0,0)
-
-        //add outline square for hovering over tiles
-        tilehover = this.add.sprite(32 * 12, 16 * 12, 'tilehover')
-        tilehover.depth = 2
+        map = this.make.tilemap({key: 'map'})
+        const tileset = map.addTilesetImage('roomtile', 'tile')
+        worldLayer = map.createStaticLayer("ground", tileset, game.config.width/2,game.config.height/2);
 
         //creates habbo sprite and sets scale to match tilemap
-        player = this.physics.add.sprite(32*12, 16*12, 'habbo')
+        player = this.physics.add.sprite(431,316, 'habbo')
+        player.setOrigin(0.5,1)
         player.setScale(0.5)
+
+        //Pathfinding
+        this.finder = new EasyStar.js();
+        var grid = [];
+        for(var y = 0; y < map.height; y++){
+        var col = [];
+        for(var x = 0; x < map.width; x++){
+            // In each cell we store the ID of the tile, which corresponds
+            // to its index in the tileset of the map ("ID" field in Tiled)
+            col.push(getTileID(x,y));
+        }
+        grid.push(col);
+        }
+        this.finder.setGrid(grid);
+        var tilesets = map.tilesets[0];
+        var properties = tilesets.tileProperties;
+        var acceptableTiles = [];
+
+        for(var i = tilesets.firstgid-1; i < tileset.total; i++){ // firstgid and total are fields from Tiled that indicate the range of IDs that the tiles can take in that tileset
+        if(!properties.hasOwnProperty(i)) {
+            // If there is no property indicated at all, it means it's a walkable tile
+            acceptableTiles.push(i+1);
+            continue;
+        }
+        if(!properties[i].collide) acceptableTiles.push(i+1);
+        if(properties[i].cost) this.finder.setTileCost(i+1, properties[i].cost); // If there is a cost attached to the tile, let's register it
+        }
+        this.finder.setAcceptableTiles(acceptableTiles);
 
         //Set Animations for habbo walking
         this.anims.create({
@@ -102,22 +119,26 @@
             frameRate: 20
         })
     }
-
     function update ()
     {
-         
+        this.label.setText('(' + this.pointer.x + ', ' + this.pointer.y + ')');   
     }
 
-    handleClick = (pointer) => {
-        //prevents variable distance between tiles (currently only works for x axis)
-        let distance = player.x - pointer.x;
+    const handleClick = (clickedLocation) => {
+        movePlayer(clickedLocation)
+    }
+
+    const movePlayer = (clickedLocation) => {
+         //prevents variable distance between tiles (currently only works for x axis)
+        let distance = player.x - clickedLocation.x;
         let speed = 120;
         let duration = (Math.sqrt(distance*distance) / speed) * 1000;
 
         //Finds which Tile (x,y) user clicked and returns world position for it
-        let {x, y} = cartToIso()
-        let newX = map.tileToWorldXY(x,y).x + 32 //why do i have to add here?
-        let newY = map.tileToWorldXY(x,y).y - 32 // why am I subtracting? the math is wrong somewhere else
+        let tile = map.getTileAtWorldXY(clickedLocation.x, clickedLocation.y)
+        let newX = map.tileToWorldXY(tile.x, tile.y).x + 28
+        let newY = map.tileToWorldXY(tile.x, tile.y).y + 20
+
 
         //If user clicks begins walk animation depending on click direction again only on X axis as of now
         if (tween){
@@ -142,23 +163,36 @@
         duration: duration,
         onComplete: onCompleteHandler
         });
-        
-       
+
+        //pathfinding    
+        var fromX = map.getTileAtWorldXY(player.x, player.y).x
+        var fromY = map.getTileAtWorldXY(player.x, player.y).y
+        var toX = tile.x
+        var toY = tile.y
+        console.log(`%c pathfinding beginning`,'background: #222; color: #bada55')
+        console.log('going from ('+fromX+','+fromY+') to ('+toX+','+toY+')');
+        scene.finder.findPath(fromX, fromY, toX, toY, function( path ) {
+        if (path === null) {
+            console.warn("Path was not found.");
+        } else {
+            moveCharacter(path);
+        }
+        });
+        scene.finder.calculate();
     }
-    onCompleteHandler = () =>{
+    const onCompleteHandler = () =>{
         //stops walking animation this should stop on last player direction in the future
         console.log(`Finished walking, arrived at X:${player.x}-Y:${player.y}`)
         player.anims.play({key: 'turn'})
         tween = null;
     }
-    cartToIso = () => {
-        //maths for finding the isometric square/tile cords for where the user clicks
-        let x =  Math.floor((mouse.y / 32 + mouse.x / 64) - 16)
-        let y = Math.floor( 0.5 * (-mouse.x / 32 + mouse.y / 16) -3)
-        return {x: x, y: y}
+    getTileID = function(x,y){
+        var tile = map.getTileAt(x, y);
+        return tile.index;
+    };
+
+    const moveCharacter = (path) => {
+        console.log(path)
     }
 
 </script>
-
-</body>
-</html>
