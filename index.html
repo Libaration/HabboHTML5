@@ -5,6 +5,8 @@
     <title>new map design test</title>
     <script src="assets/easystar.js"></script>
     <script src="//cdn.jsdelivr.net/npm/phaser@3.52.0/dist/phaser.js"></script>
+    <script src="https://unpkg.com/interactjs@1.10.3/dist/interact.min.js"></script>
+    <link rel="stylesheet" href="stylesheets/style.css">
    <style type="text/css">
         body {
             margin: 0;
@@ -342,6 +344,11 @@ const objectClicked = (pointer,gameObject) =>
     }
     const rollDice = () => {
         let num = Math.floor(Math.random() * 6)
+        let holoText = document.getElementById('holoText')
+        if(holoText.value){
+            num = holoText.value - 1;
+        }
+        
         scene.anims.create({
             key: `holo${num}`,
             frames:  [{key: 'holodice', frame: num}],
@@ -353,5 +360,31 @@ const objectClicked = (pointer,gameObject) =>
         });
         holodice.anims.play(`holo${num}`, true)
     }
+    const modTools = () => {
+        let alertBox = document.createElement('div')
+        alertBox.classList.add('alertBox')
+        alertBox.innerHTML = "Holodice number : "
+        let holoText = document.createElement('input')
+        holoText.id = "holoText"
+        alertBox.appendChild(holoText)
+        document.body.appendChild(alertBox)
+    }
+
+    const position = { x: 0, y: 0 }
+
+interact('.alertBox').draggable({
+  listeners: {
+    start (event) {
+      
+    },
+    move (event) {
+      position.x += event.dx
+      position.y += event.dy
+
+      event.target.style.transform =
+        `translate(${position.x}px, ${position.y}px)`
+    },
+  }
+})
 
 </script>

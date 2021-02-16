@@ -1,0 +1,25 @@
+body {
+  @font-face {
+    font-family: "Ubuntu243";
+    src: url("/assets/fonts/1130__-IR_Volter.woff") format("woff");
+  }
+}
+div.alertBox {
+  touch-action: none;
+  color: black;
+  position: absolute;
+  top: 500px;
+  width: 280px;
+  height: 60px;
+
+  padding: 20px;
+  font-size: 13px;
+  font-family: "Ubuntu243";
+  margin-top: 9px;
+  background-image: url("/assets/alertBox.png");
+  padding-top: 50px;
+}
+div.alertBox input {
+  width: 20px;
+  font-family: "Ubuntu243";
+}
