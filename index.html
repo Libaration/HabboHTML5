@@ -37,13 +37,14 @@
             update: update
         },
          pixelArt: true,
-        //  zoom: 1.5
+          zoom: 1.2
     };
     var game = new Phaser.Game(config);
     var player;
     var tween=null;
     var scene;
     var mouse;
+    var furni;
     function preload ()
     {
         //loads the sprites and assets to be used
@@ -51,6 +52,11 @@
         this.load.image('tilehover', 'assets/tile_outline.png')
         this.load.tilemapTiledJSON("map", "assets/7x7.json")
         this.load.spritesheet('habbo', 'assets/habbospritesheet.png', { frameWidth: 110, frameHeight: 221 });
+        this.load.spritesheet('holodice', 'assets/furni/edice.png', { frameWidth: 40, frameHeight: 56});
+        // this.load.multiatlas('holodice', 'assets/furni/edice.json', 'assets/furni');
+        
+        
+
     }
     function create ()
     {   
@@ -68,12 +74,37 @@
         const tileset = map.addTilesetImage('roomtile', 'tile')
         worldLayer = map.createStaticLayer("ground", tileset, game.config.width/2,game.config.height/2);
 
-        
 
         //creates habbo sprite and sets scale to match tilemap
         player = this.physics.add.sprite(431,316, 'habbo')
         player.setOrigin(0.5,1)
         player.setScale(0.5)
+        player.depth = 1;
+        player.setCollideWorldBounds(true);
+
+
+        //create objects group
+        furni = this.physics.add.group({
+        bounceX: 0,
+        bounceY: 0,
+        collideWorldBounds: true
+        });
+        
+
+        //creates holodice
+        holoOffsetY = 18
+        holodice = furni.create(431, 316 - holoOffsetY, 'holodice');
+        
+        
+        holodice.setInteractive()
+        let tile = map.getTileAtWorldXY(431,316)
+       
+        
+
+        //Listen for gameobject clicks
+        this.input.on('gameobjectdown',objectClicked);
+
+        holodice.depth = 0
 
         //Pathfinding
         this.finder = new EasyStar.js();
@@ -103,6 +134,23 @@
         }
         this.finder.setAcceptableTiles(acceptableTiles);
 
+        //set animations for holodice
+        this.anims.create({
+            key: 'roll',
+            frames: this.anims.generateFrameNumbers('holodice', {start: 1, end: 8}),
+            frameRate: 60,
+            repeat: -1,
+        });
+        this.anims.create({
+            key: 'off',
+            frames:  [{key: 'holodice', frame: 6}],
+            frameRate: 10,
+            repeat: -1,
+        });
+        
+        holodice.anims.play('off',true)
+       
+
         //Set Animations for habbo walking
         this.anims.create({
             key: 'left',
@@ -122,10 +170,14 @@
             frames: [{key: 'habbo', frame: 0}],
             frameRate: 20
         })
+        
     }
     function update ()
     {
-        this.label.setText('(' + this.pointer.x + ', ' + this.pointer.y + ')');   
+        this.label.setText('(' + this.pointer.x + ', ' + this.pointer.y + ')'); 
+        this.physics.world.collide(player, furni, function (player,furni) {
+        //hitcollision
+    });
     }
 
     const handleClick = (clickedLocation) => {
@@ -193,27 +245,10 @@
 
     const moveCharacter = (path) => {
         var tweens = [];
-    //     let tiles = path.map(tile => {
-    //     return map.getTileAt(tile.x,tile.y)
-    // })
-    // tiles.forEach(tile => {
-    //     i = 0
-    //     tweens.push({
-    //         targets: tile,
-    //         tint: 0x01BAEF,
-    //         ease: 'Sine.easeInOut',
-    //         duration: 300,
-    //         delay: i * 50,
-    //         yoyo: true,
-    //     })
-    //     i++
-    // })
         //pathfinder
         for(var i = 0; i < path.length-1; i++){
         var ex = path[i+1].x;
         var ey = path[i+1].y;
-        let tile = map.getTileAt(ex,ey)
-        // tile.tint = 0x01BAEF;
         let newX = map.tileToWorldXY(ex, ey).x + 28
         let newY = map.tileToWorldXY(ex,ey).y + 20
         
@@ -231,7 +266,7 @@
         targets: player,
         x: newX,
         y: newY,
-        duration: 400,
+        duration: 350,
         onComplete: onCompleteHandler
         });
         
@@ -268,6 +303,36 @@ const lightPath = (path) => {
             i = 0;
         }
     })
+
 }
+const objectClicked = (pointer,gameObject) =>
+    {
+        let lastTime = 0;
+        scene.input.on("pointerdown", ()=>{
+        let clickDelay = scene.time.now - lastTime;
+        lastTime = scene.time.now;
+        if(clickDelay < 500) {
+            if(gameObject.texture.key == 'holodice' && holodice.anims.currentAnim != 'roll'){
+                holodice.anims.play('roll', true)
+                scene.time.addEvent({ delay: 2500, callback: rollDice, callbackScope: this, loop: false });
+                }
+            }
+        });
+        
+    }
+    const rollDice = () => {
+        let num = Math.floor(Math.random() * 6)
+        console.log(num)
+        scene.anims.create({
+            key: `holo${num}`,
+            frames:  [{key: 'holodice', frame: num}],
+            frameRate: 10,
+            repeat: -1,
+            onComplete: () => {
+                holodice.anims.stop()
+            }
+        });
+        holodice.anims.play(`holo${num}`, true)
+    }
 
 </script>
