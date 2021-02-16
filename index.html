@@ -68,6 +68,8 @@
         const tileset = map.addTilesetImage('roomtile', 'tile')
         worldLayer = map.createStaticLayer("ground", tileset, game.config.width/2,game.config.height/2);
 
+        
+
         //creates habbo sprite and sets scale to match tilemap
         player = this.physics.add.sprite(431,316, 'habbo')
         player.setOrigin(0.5,1)
@@ -173,6 +175,7 @@
             console.warn("Path was not found.");
         } else {
             moveCharacter(path);
+            lightPath(path)
         }
         });
         scene.finder.calculate();
@@ -189,19 +192,31 @@
     };
 
     const moveCharacter = (path) => {
-         //prevents variable distance between tiles (currently only works for x axis)
-        let distance = player.x - mouse.x;
-        let speed = 500;
-        let duration = (Math.sqrt(distance*distance) / speed) * 1000;
-
-        //pathfinder
         var tweens = [];
+    //     let tiles = path.map(tile => {
+    //     return map.getTileAt(tile.x,tile.y)
+    // })
+    // tiles.forEach(tile => {
+    //     i = 0
+    //     tweens.push({
+    //         targets: tile,
+    //         tint: 0x01BAEF,
+    //         ease: 'Sine.easeInOut',
+    //         duration: 300,
+    //         delay: i * 50,
+    //         yoyo: true,
+    //     })
+    //     i++
+    // })
+        //pathfinder
         for(var i = 0; i < path.length-1; i++){
         var ex = path[i+1].x;
         var ey = path[i+1].y;
-        console.log(ex,ey)
+        let tile = map.getTileAt(ex,ey)
+        // tile.tint = 0x01BAEF;
         let newX = map.tileToWorldXY(ex, ey).x + 28
         let newY = map.tileToWorldXY(ex,ey).y + 20
+        
         tweens.push({
         onStart: () => {
             console.log(`Starting walking to X:${newX}-Y:${newY}`)
@@ -216,13 +231,43 @@
         targets: player,
         x: newX,
         y: newY,
-        duration: duration,
+        duration: 400,
         onComplete: onCompleteHandler
         });
+        
     }
     scene.tweens.timeline({
         tweens: tweens
     });
-    }
+}
+const lightPath = (path) => {
+    let tiles = path.map(tile => {
+        return map.getTileAt(tile.x,tile.y)
+        })
+        var i = 0
+        tiles.forEach(tile => {
+        
+        scene.tweens.add({
+            targets: tile,
+            scaleX: 1,
+            scaleY: 1,
+            ease: 'Sine.easeInOut',
+            duration: 1000,
+            delay: i * 100,
+            yoyo: true,
+            onUpdate: function (tween){
+                tile.tint = 0x01BAEF;
+            },
+            onComplete: function(tween){
+                tile.tint = 0xFFFFFF;
+            }
+        })
+        i++
+        if (i % 12 === 0)
+        {
+            i = 0;
+        }
+    })
+}
 
 </script>
