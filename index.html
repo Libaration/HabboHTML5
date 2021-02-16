@@ -43,6 +43,7 @@
     var player;
     var tween=null;
     var scene;
+    var mouse;
     function preload ()
     {
         //loads the sprites and assets to be used
@@ -60,6 +61,7 @@
 
         // Set mouse variable and send to handleclick function on mouse up event
         this.input.on('pointerup',handleClick);
+        mouse = this.input.mousePointer;
 
         //Create tilemap
         map = this.make.tilemap({key: 'map'})
@@ -125,44 +127,39 @@
     }
 
     const handleClick = (clickedLocation) => {
-        movePlayer(clickedLocation)
+        pathfind(clickedLocation)
     }
 
-    const movePlayer = (clickedLocation) => {
-         //prevents variable distance between tiles (currently only works for x axis)
-        let distance = player.x - clickedLocation.x;
-        let speed = 120;
-        let duration = (Math.sqrt(distance*distance) / speed) * 1000;
-
+    const pathfind = (clickedLocation) => {
         //Finds which Tile (x,y) user clicked and returns world position for it
         let tile = map.getTileAtWorldXY(clickedLocation.x, clickedLocation.y)
         let newX = map.tileToWorldXY(tile.x, tile.y).x + 28
         let newY = map.tileToWorldXY(tile.x, tile.y).y + 20
 
 
-        //If user clicks begins walk animation depending on click direction again only on X axis as of now
-        if (tween){
-            console.log('Already walking')
-            console.log('Stopping walking')
-            tween.stop()
-        }
-        tween = scene.tweens.add({
-        onStart: () => {
-            console.log(`Starting walking to X:${newX}-Y:${newY}`)
-            if(newX < player.x){
-                //player.flipX = true; could use for other sprite directions i dont have
-                player.anims.play('left', true)
-            }
-            else if(newX > player.x){
-                player.anims.play('right', true)
-            }
-        },
-        targets: player,
-        x: newX,
-        y: newY,
-        duration: duration,
-        onComplete: onCompleteHandler
-        });
+        // //If user clicks begins walk animation depending on click direction again only on X axis as of now
+        // if (tween){
+        //     console.log('Already walking')
+        //     console.log('Stopping walking')
+        //     tween.stop()
+        // }
+        // tween = scene.tweens.add({
+        // onStart: () => {
+        //     console.log(`Starting walking to X:${newX}-Y:${newY}`)
+        //     if(newX < player.x){
+        //         //player.flipX = true; could use for other sprite directions i dont have
+        //         player.anims.play('left', true)
+        //     }
+        //     else if(newX > player.x){
+        //         player.anims.play('right', true)
+        //     }
+        // },
+        // targets: player,
+        // x: newX,
+        // y: newY,
+        // duration: duration,
+        // onComplete: onCompleteHandler
+        // });
 
         //pathfinding    
         var fromX = map.getTileAtWorldXY(player.x, player.y).x
@@ -192,7 +189,40 @@
     };
 
     const moveCharacter = (path) => {
-        console.log(path)
+         //prevents variable distance between tiles (currently only works for x axis)
+        let distance = player.x - mouse.x;
+        let speed = 500;
+        let duration = (Math.sqrt(distance*distance) / speed) * 1000;
+
+        //pathfinder
+        var tweens = [];
+        for(var i = 0; i < path.length-1; i++){
+        var ex = path[i+1].x;
+        var ey = path[i+1].y;
+        console.log(ex,ey)
+        let newX = map.tileToWorldXY(ex, ey).x + 28
+        let newY = map.tileToWorldXY(ex,ey).y + 20
+        tweens.push({
+        onStart: () => {
+            console.log(`Starting walking to X:${newX}-Y:${newY}`)
+            if(newX < player.x){
+                //player.flipX = true; could use for other sprite directions i dont have
+                player.anims.play('left', true)
+            }
+            else if(newX > player.x){
+                player.anims.play('right', true)
+            }
+        },
+        targets: player,
+        x: newX,
+        y: newY,
+        duration: duration,
+        onComplete: onCompleteHandler
+        });
+    }
+    scene.tweens.timeline({
+        tweens: tweens
+    });
     }
 
 </script>
