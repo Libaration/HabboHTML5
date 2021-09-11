@@ -1,211 +1,220 @@
-<!doctype html> 
-<html lang="en"> 
-<head> 
+<!DOCTYPE html>
+<html lang="en">
+  <head>
     <meta charset="UTF-8" />
     <title>new map design test</title>
     <script src="assets/easystar.js"></script>
     <script src="//cdn.jsdelivr.net/npm/phaser@3.52.0/dist/phaser.js"></script>
     <script src="https://unpkg.com/interactjs@1.10.3/dist/interact.min.js"></script>
-    <link rel="stylesheet" href="stylesheets/style.css">
-   <style type="text/css">
-        body {
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background: #111
-        }
+    <link rel="stylesheet" href="stylesheets/style.css" />
+    <style type="text/css">
+      body {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background: #fff;
+      }
     </style>
-</head>
-<body>
-
-<script type="text/javascript">
-
-   var config = {
+  </head>
+  <body>
+    <script type="text/javascript">
+      var config = {
         type: Phaser.AUTO,
         width: 800,
         height: 600,
         physics: {
-            default: 'arcade',
-            arcade: {
-                gravity: {y : 0},
-                debug: false
-            }
+          default: 'arcade',
+          arcade: {
+            gravity: { y: 0 },
+            debug: false,
+          },
         },
         scene: {
-            preload: preload,
-            create: create,
-            update: update
+          preload: preload,
+          create: create,
+          update: update,
         },
-         pixelArt: true,
-          zoom: 1.1
-    };
-    var game = new Phaser.Game(config);
-    var player;
-    var tween=null;
-    var scene;
-    var mouse;
-    var furni;
-    function preload ()
-    {
-        //loads the sprites and assets to be used
-        this.load.image('tile', 'assets/tile.png')
-        this.load.image('tilehover', 'assets/tile_outline.png')
-        this.load.tilemapTiledJSON("map", "assets/7x7.json")
-        this.load.spritesheet('habbo', 'assets/habbospritesheet.png', { frameWidth: 110, frameHeight: 221 });
-        this.load.spritesheet('holodice', 'assets/furni/edice.png', { frameWidth: 40, frameHeight: 56});
-        // this.load.multiatlas('holodice', 'assets/furni/edice.json', 'assets/furni');
-        
-        
+        pixelArt: true,
+        zoom: 1.1,
+      };
+      var game = new Phaser.Game(config);
+      var player;
+      var tween = null;
+      var scene;
+      var mouse;
+      var furni;
 
-    }
-    function create ()
-    {   
+      function preload() {
+        //loads the sprites and assets to be used
+        this.load.image('tile', 'assets/tile.png');
+        this.load.image('tilehover', 'assets/tile_outline.png');
+        this.load.tilemapTiledJSON('map', 'assets/7x7.json');
+        this.load.spritesheet('habbo', 'assets/habbospritesheet.png', {
+          frameWidth: 110,
+          frameHeight: 221,
+        });
+        this.load.spritesheet('holodice', 'assets/furni/edice.png', {
+          frameWidth: 40,
+          frameHeight: 56,
+        });
+        // this.load.multiatlas('holodice', 'assets/furni/edice.json', 'assets/furni');
+      }
+      function create() {
         scene = this;
+        scene.cameras.main.setBackgroundColor('#ffffff');
         //debugging tools
-        this.label = this.add.text(0, 0, '(x, y)', { fontFamily: '"Monospace"'});
+        this.label = this.add.text(0, 0, '(x, y)', {
+          fontFamily: '"Monospace"',
+        });
         this.pointer = this.input.activePointer;
 
         // Set mouse variable and send to handleclick function on mouse up event
-        this.input.on('pointerup',handleClick);
+        this.input.on('pointerup', handleClick);
         mouse = this.input.mousePointer;
 
         //Create tilemap
-        map = this.make.tilemap({key: 'map'})
-        const tileset = map.addTilesetImage('roomtile', 'tile')
-        worldLayer = map.createStaticLayer("ground", tileset, game.config.width/2,game.config.height/2);
-
+        map = this.make.tilemap({ key: 'map' });
+        const tileset = map.addTilesetImage('roomtile', 'tile');
+        worldLayer = map.createStaticLayer(
+          'ground',
+          tileset,
+          game.config.width / 2,
+          game.config.height / 2
+        );
 
         //creates habbo sprite and sets scale to match tilemap
-        player = this.physics.add.sprite(431,316, 'habbo')
-        player.setOrigin(0.5,1)
-        player.setScale(0.5)
+        player = this.physics.add.sprite(431, 316, 'habbo');
+        player.setOrigin(0.5, 1);
+        player.setScale(0.5);
         player.depth = 1;
         player.setCollideWorldBounds(true);
 
-
         //create objects group
         furni = this.physics.add.group({
-        bounceX: 0,
-        bounceY: 0,
-        collideWorldBounds: true
+          bounceX: 0,
+          bounceY: 0,
+          collideWorldBounds: true,
         });
-        
 
         //creates holodice
-        holoOffsetY = 18
+        holoOffsetY = 18;
         holodice = furni.create(431, 316 - holoOffsetY, 'holodice');
-        
-        
-        holodice.setInteractive()
-        let tile = map.getTileAtWorldXY(431,316)
-       
-        
+
+        holodice.setInteractive();
+        let tile = map.getTileAtWorldXY(431, 316);
 
         //Listen for gameobject clicks
-        this.input.on('gameobjectdown',objectClicked);
+        // this.input.on('gameobjectdown', objectClicked);
 
-        holodice.depth = 0
+        // holodice.depth = 0;
 
         //Pathfinding
         this.finder = new EasyStar.js();
         var grid = [];
-        for(var y = 0; y < map.height; y++){
-        var col = [];
-        for(var x = 0; x < map.width; x++){
+        for (var y = 0; y < map.height; y++) {
+          var col = [];
+          for (var x = 0; x < map.width; x++) {
             // In each cell we store the ID of the tile, which corresponds
             // to its index in the tileset of the map ("ID" field in Tiled)
-            col.push(getTileID(x,y));
-        }
-        grid.push(col);
+            col.push(getTileID(x, y));
+          }
+          grid.push(col);
         }
         this.finder.setGrid(grid);
         var tilesets = map.tilesets[0];
         var properties = tilesets.tileProperties;
         var acceptableTiles = [];
 
-        for(var i = tilesets.firstgid-1; i < tileset.total; i++){ // firstgid and total are fields from Tiled that indicate the range of IDs that the tiles can take in that tileset
-        if(!properties.hasOwnProperty(i)) {
+        for (var i = tilesets.firstgid - 1; i < tileset.total; i++) {
+          // firstgid and total are fields from Tiled that indicate the range of IDs that the tiles can take in that tileset
+          if (!properties.hasOwnProperty(i)) {
             // If there is no property indicated at all, it means it's a walkable tile
-            acceptableTiles.push(i+1);
+            acceptableTiles.push(i + 1);
             continue;
-        }
-        if(!properties[i].collide) acceptableTiles.push(i+1);
-        if(properties[i].cost) this.finder.setTileCost(i+1, properties[i].cost); // If there is a cost attached to the tile, let's register it
+          }
+          if (!properties[i].collide) acceptableTiles.push(i + 1);
+          if (properties[i].cost)
+            this.finder.setTileCost(i + 1, properties[i].cost); // If there is a cost attached to the tile, let's register it
         }
         this.finder.setAcceptableTiles(acceptableTiles);
 
         //set animations for holodice
         this.anims.create({
-            key: 'roll',
-            frames: this.anims.generateFrameNumbers('holodice', {start: 1, end: 8}),
-            frameRate: 60,
-            repeat: -1,
+          key: 'roll',
+          frames: this.anims.generateFrameNumbers('holodice', {
+            start: 1,
+            end: 8,
+          }),
+          frameRate: 60,
+          repeat: -1,
         });
         this.anims.create({
-            key: 'off',
-            frames:  [{key: 'holodice', frame: 6}],
-            frameRate: 10,
-            repeat: -1,
+          key: 'off',
+          frames: [{ key: 'holodice', frame: 6 }],
+          frameRate: 10,
+          repeat: -1,
         });
-        
-        holodice.anims.play('off',true)
-       
+
+        holodice.anims.play('off', true);
 
         //Set Animations for habbo walking
         this.anims.create({
-            key: 'left',
-            frames: this.anims.generateFrameNumbers('habbo', {start: 1, end: 3}),
-            frameRate: 10,
-            repeat: -1
+          key: 'left',
+          frames: this.anims.generateFrameNumbers('habbo', {
+            start: 1,
+            end: 3,
+          }),
+          frameRate: 10,
+          repeat: -1,
         });
 
         this.anims.create({
-            key: 'leftStill',
-            frames: [{key: 'habbo', frame: 1}],
-            frameRate: 10,
-            repeat: -1
+          key: 'leftStill',
+          frames: [{ key: 'habbo', frame: 1 }],
+          frameRate: 10,
+          repeat: -1,
         });
 
         this.anims.create({
-            key: 'rightStill',
-            frames: [{key: 'habbo', frame: 4}],
-            frameRate: 10,
-            repeat: -1
+          key: 'rightStill',
+          frames: [{ key: 'habbo', frame: 4 }],
+          frameRate: 10,
+          repeat: -1,
         });
 
         this.anims.create({
-            key: 'right',
-            frames: this.anims.generateFrameNumbers('habbo', { start: 4, end: 6 }),
-            frameRate: 10,
-            repeat: -1
-        })
+          key: 'right',
+          frames: this.anims.generateFrameNumbers('habbo', {
+            start: 4,
+            end: 6,
+          }),
+          frameRate: 10,
+          repeat: -1,
+        });
         this.anims.create({
-            key: 'turn',
-            frames: [{key: 'habbo', frame: 0}],
-            frameRate: 20
-        })
-        
-    }
-    function update ()
-    {
-        this.label.setText('(' + this.pointer.x + ', ' + this.pointer.y + ')'); 
-        this.physics.world.collide(player, furni, function (player,furni) {
-        //hitcollision
-    });
-    }
+          key: 'turn',
+          frames: [{ key: 'habbo', frame: 0 }],
+          frameRate: 20,
+        });
+      }
+      function update() {
+        this.label.setText('(' + this.pointer.x + ', ' + this.pointer.y + ')');
+        this.physics.world.collide(player, furni, function (player, furni) {
+          //hitcollision
+        });
+      }
 
-    const handleClick = (clickedLocation) => {
-        pathfind(clickedLocation)
-    }
+      const handleClick = (clickedLocation) => {
+        pathfind(clickedLocation);
+      };
 
-    const pathfind = (clickedLocation) => {
+      const pathfind = (clickedLocation) => {
         //Finds which Tile (x,y) user clicked and returns world position for it
-        let tile = map.getTileAtWorldXY(clickedLocation.x, clickedLocation.y)
-        let newX = map.tileToWorldXY(tile.x, tile.y).x + 28
-        let newY = map.tileToWorldXY(tile.x, tile.y).y + 20
-
+        let tile = map.getTileAtWorldXY(clickedLocation.x, clickedLocation.y);
+        let newX = map.tileToWorldXY(tile.x, tile.y).x + 28;
+        let newY = map.tileToWorldXY(tile.x, tile.y).y + 20;
 
         // //If user clicks begins walk animation depending on click direction again only on X axis as of now
         // if (tween){
@@ -231,74 +240,84 @@
         // onComplete: onCompleteHandler
         // });
 
-        //pathfinding    
-        var fromX = map.getTileAtWorldXY(player.x, player.y).x
-        var fromY = map.getTileAtWorldXY(player.x, player.y).y
-        var toX = tile.x
-        var toY = tile.y
-        console.log(`%c pathfinding beginning`,'background: #222; color: #bada55')
-        console.log('going from ('+fromX+','+fromY+') to ('+toX+','+toY+')');
-        scene.finder.findPath(fromX, fromY, toX, toY, function( path ) {
-        if (path === null) {
-            console.warn("Path was not found.");
-        } else {
+        //pathfinding
+        var fromX = map.getTileAtWorldXY(player.x, player.y).x;
+        var fromY = map.getTileAtWorldXY(player.x, player.y).y;
+        var toX = tile.x;
+        var toY = tile.y;
+        console.log(
+          `%c pathfinding beginning`,
+          'background: #222; color: #bada55'
+        );
+        console.log(
+          'going from (' +
+            fromX +
+            ',' +
+            fromY +
+            ') to (' +
+            toX +
+            ',' +
+            toY +
+            ')'
+        );
+        scene.finder.findPath(fromX, fromY, toX, toY, function (path) {
+          if (path === null) {
+            console.warn('Path was not found.');
+          } else {
             moveCharacter(path);
-            lightPath(path)
-        }
+            lightPath(path);
+          }
         });
         scene.finder.calculate();
-    }
-    const onCompleteHandler = () =>{
+      };
+      const onCompleteHandler = () => {
         //stops walking animation this should stop on last player direction in the future
-        console.log(`Finished walking, arrived at X:${player.x}-Y:${player.y}`)
-        player.anims.play({key: 'turn'})
+        console.log(`Finished walking, arrived at X:${player.x}-Y:${player.y}`);
+        player.anims.play({ key: 'turn' });
         tween = null;
-    }
-    getTileID = function(x,y){
+      };
+      getTileID = function (x, y) {
         var tile = map.getTileAt(x, y);
         return tile.index;
-    };
+      };
 
-    const moveCharacter = (path) => {
+      const moveCharacter = (path) => {
         var tweens = [];
         //pathfinder
-        for(var i = 0; i < path.length-1; i++){
-        var ex = path[i+1].x;
-        var ey = path[i+1].y;
-        let newX = map.tileToWorldXY(ex, ey).x + 28
-        let newY = map.tileToWorldXY(ex,ey).y + 20
-        
-        tweens.push({
-        onStart: () => {
-            console.log(`Starting walking to X:${newX}-Y:${newY}`)
-            if(newX < player.x){
+        for (var i = 0; i < path.length - 1; i++) {
+          var ex = path[i + 1].x;
+          var ey = path[i + 1].y;
+          let newX = map.tileToWorldXY(ex, ey).x + 28;
+          let newY = map.tileToWorldXY(ex, ey).y + 20;
+
+          tweens.push({
+            onStart: () => {
+              console.log(`Starting walking to X:${newX}-Y:${newY}`);
+              if (newX < player.x) {
                 //player.flipX = true; could use for other sprite directions i dont have
-                player.anims.play('left', true)
-            }
-            else if(newX > player.x){
-                player.anims.play('right', true)
-            }
-        },
-        targets: player,
-        x: newX,
-        y: newY,
-        duration: 350,
-        onComplete: onCompleteHandler
+                player.anims.play('left', true);
+              } else if (newX > player.x) {
+                player.anims.play('right', true);
+              }
+            },
+            targets: player,
+            x: newX,
+            y: newY,
+            duration: 350,
+            onComplete: onCompleteHandler,
+          });
+        }
+        scene.tweens.timeline({
+          tweens: tweens,
         });
-        
-    }
-    scene.tweens.timeline({
-        tweens: tweens
-    });
-}
-const lightPath = (path) => {
-    let tiles = path.map(tile => {
-        return map.getTileAt(tile.x,tile.y)
-        })
-        var i = 0
-        tiles.forEach(tile => {
-        
-        scene.tweens.add({
+      };
+      const lightPath = (path) => {
+        let tiles = path.map((tile) => {
+          return map.getTileAt(tile.x, tile.y);
+        });
+        var i = 0;
+        tiles.forEach((tile) => {
+          scene.tweens.add({
             targets: tile,
             scaleX: 1,
             scaleY: 1,
@@ -306,85 +325,86 @@ const lightPath = (path) => {
             duration: 1000,
             delay: i * 100,
             yoyo: true,
-            onUpdate: function (tween){
-                tile.tint = 0x01BAEF;
+            onUpdate: function (tween) {
+              tile.tint = 0x01baef;
             },
-            onComplete: function(tween){
-                tile.tint = 0xFFFFFF;
-            }
-        })
-        i++
-        if (i % 12 === 0)
-        {
+            onComplete: function (tween) {
+              tile.tint = 0xffffff;
+            },
+          });
+          i++;
+          if (i % 12 === 0) {
             i = 0;
-        }
-    })
-
-}
-const objectClicked = (pointer,gameObject) =>
-    {
+          }
+        });
+      };
+      const objectClicked = (pointer, gameObject) => {
         let lastTime = 0;
-        scene.input.on("pointerdown", ()=>{
-        let clickDelay = scene.time.now - lastTime;
-        lastTime = scene.time.now;
-        if(clickDelay < 500) {
-            if(player.x > holodice.x){
-                    player.anims.play('leftStill', true)
-                }
-                else {
-                    player.anims.play('rightStill', true)
-                }
-            if(gameObject.texture.key == 'holodice' && holodice.anims.currentAnim != 'roll'){
-                holodice.anims.play('roll', true)
-                scene.time.addEvent({ delay: 2500, callback: rollDice, callbackScope: this, loop: false });
-                }
+        scene.input.on('pointerdown', () => {
+          let clickDelay = scene.time.now - lastTime;
+          lastTime = scene.time.now;
+          if (clickDelay < 500) {
+            if (player.x > holodice.x) {
+              player.anims.play('leftStill', true);
+            } else {
+              player.anims.play('rightStill', true);
             }
+            if (
+              gameObject.texture.key == 'holodice' &&
+              holodice.anims.currentAnim != 'roll'
+            ) {
+              holodice.anims.play('roll', true);
+              scene.time.addEvent({
+                delay: 2500,
+                callback: rollDice,
+                callbackScope: this,
+                loop: false,
+              });
+            }
+          }
         });
-        
-    }
-    const rollDice = () => {
-        let num = Math.floor(Math.random() * 6)
-        let holoText = document.getElementById('holoText')
-        if(holoText.value){
-            num = holoText.value - 1;
+      };
+      const rollDice = () => {
+        let num = Math.floor(Math.random() * 6);
+        let holoText = document.getElementById('holoText');
+        if (holoText.value) {
+          num = holoText.value - 1;
         }
-        
+
         scene.anims.create({
-            key: `holo${num}`,
-            frames:  [{key: 'holodice', frame: num}],
-            frameRate: 10,
-            repeat: -1,
-            onComplete: () => {
-                holodice.anims.stop()
-            }
+          key: `holo${num}`,
+          frames: [{ key: 'holodice', frame: num }],
+          frameRate: 10,
+          repeat: -1,
+          onComplete: () => {
+            holodice.anims.stop();
+          },
         });
-        holodice.anims.play(`holo${num}`, true)
-    }
-    const modTools = () => {
-        let alertBox = document.createElement('div')
-        alertBox.classList.add('alertBox')
-        alertBox.innerHTML = "Holodice number : "
-        let holoText = document.createElement('input')
-        holoText.id = "holoText"
-        alertBox.appendChild(holoText)
-        document.body.appendChild(alertBox)
-    }
+        holodice.anims.play(`holo${num}`, true);
+      };
+      const modTools = () => {
+        let alertBox = document.createElement('div');
+        alertBox.classList.add('alertBox');
+        alertBox.innerHTML = 'Holodice number : ';
+        let holoText = document.createElement('input');
+        holoText.id = 'holoText';
+        alertBox.appendChild(holoText);
+        document.body.appendChild(alertBox);
+      };
 
-    const position = { x: 0, y: 0 }
+      const position = { x: 0, y: 0 };
 
-interact('.alertBox').draggable({
-  listeners: {
-    start (event) {
-      
-    },
-    move (event) {
-      position.x += event.dx
-      position.y += event.dy
+      interact('.alertBox').draggable({
+        listeners: {
+          start(event) {},
+          move(event) {
+            position.x += event.dx;
+            position.y += event.dy;
 
-      event.target.style.transform =
-        `translate(${position.x}px, ${position.y}px)`
-    },
-  }
-})
-
-</script>
+            event.target.style.transform = `translate(${position.x}px, ${position.y}px)`;
+          },
+        },
+      });
+    </script>
+  </body>
+</html>
